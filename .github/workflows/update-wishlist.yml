@@ -11,12 +11,33 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Get Wishlist Issues
+      - name: Get Wishlist Issues and Update JSON
         run: |
-          curl -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/thijssenware/Verlanglijstje/issues \
-            | jq '[.[] | select(.labels[].name == "wishlist") | {name: .title, buyer: .user.login}]' \
-            > wishlist.json
+          # Get current wishlist to preserve URLs and images
+          CURRENT_WISHLIST=$(cat wishlist.json)
+          
+          # Fetch new issues
+          ISSUES=$(curl -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/thijssenware/Verlanglijstje/issues)
+          
+          # Combine current wishlist with issue data using jq
+          echo $ISSUES | jq --arg current "$CURRENT_WISHLIST" '
+            ($current | fromjson) as $existing |
+            [.[] | select(.labels[].name == "wishlist") | 
+              ($existing[] | select(.name == (input | sub("^Gekocht: "; "")))) as $item |
+              {
+                name: (input | sub("^Gekocht: "; "")),
+                url: ($item.url // null),
+                image: ($item.image // null),
+                buyer: .user.login
+              }
+            ] as $bought |
+            $existing | map(
+              if ($bought[] | .name == .name)
+              then . + ($bought[] | select(.name == .name))
+              else .
+              end
+            )' > wishlist.json
 
       - name: Commit and Push Changes
         run: |

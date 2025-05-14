@@ -1,5 +1,20 @@
 [
-    { "name": "PlayStation 5", "buyer": "" },
-    { "name": "The Great Gatsby", "buyer": "" },
-    { "name": "New Bicycle", "buyer": "" }
+    {
+        "name": "PlayStation 5",
+        "url": "https://www.playstation.com/nl-nl/ps5/",
+        "image": "images/ps5.jpg",
+        "buyer": ""
+    },
+    {
+        "name": "The Great Gatsby",
+        "url": "https://www.bol.com/nl/nl/p/the-great-gatsby/1001004011831507/",
+        "image": "images/great-gatsby.jpg",
+        "buyer": ""
+    },
+    {
+        "name": "New Bicycle",
+        "url": "https://www.fietsenwinkel.nl/cortina-u1-n3",
+        "image": "images/bicycle.jpg",
+        "buyer": ""
+    }
 ]

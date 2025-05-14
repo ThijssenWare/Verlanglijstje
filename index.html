@@ -2,71 +2,206 @@
 <html>
 <head>
     <title>Mijn Verlanglijst</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        :root {
+            --primary-color: #6200ea;
+            --hover-color: #3700b3;
+            --background-color: #f4f4f9;
+            --card-background: white;
+            --text-color: #333;
+            --success-color: #4CAF50;
+            --error-color: #f44336;
+            --gray-100: #f7f7f7;
+            --gray-200: #e6e6e6;
+            --gray-300: #d4d4d4;
+            --transition-speed: 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
         }
+
         header {
-            background-color: #6200ea;
+            background: linear-gradient(135deg, var(--primary-color), var(--hover-color));
             color: white;
-            padding: 1rem;
+            padding: 2rem;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-        ul {
-            list-style: none;
-            padding: 0;
+
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
         }
-        li {
-            background: white;
-            margin: 1rem auto;
-            padding: 1rem;
-            border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            max-width: 600px;
-            display: flex;
-            justify-content: space-between;
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            animation: fadeIn var(--transition-speed) ease-out;
+        }
+
+        .wishlist-item {
+            background: var(--card-background);
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all var(--transition-speed) ease;
+            animation: fadeIn var(--transition-speed) ease-out;
+        }
+
+        .wishlist-item:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+        }
+
+        .item-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-bottom: 1px solid var(--gray-200);
+            transition: transform var(--transition-speed) ease;
+        }
+
+        .wishlist-item:hover .item-image {
+            transform: scale(1.05);
+        }
+
+        .item-content {
+            padding: 1.5rem;
+        }
+
+        .item-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0 0 1rem 0;
+            color: var(--text-color);
+        }
+
+        .item-link {
+            display: inline-flex;
             align-items: center;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 1rem;
+            transition: color var(--transition-speed) ease;
         }
+
+        .item-link:hover {
+            color: var(--hover-color);
+        }
+
+        .item-link::after {
+            content: '↗';
+            margin-left: 4px;
+            font-size: 1.1em;
+        }
+
+        .item-status {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+        }
+
+        .bought {
+            opacity: 0.7;
+            transform: scale(0.98);
+        }
+
+        .bought .item-title {
+            text-decoration: line-through;
+            color: #999;
+        }
+
         button {
-            background-color: #6200ea;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
             cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            width: 100%;
+            transition: all var(--transition-speed) ease;
+            position: relative;
+            overflow: hidden;
         }
+
         button:hover {
-            background-color: #3700b3;
+            background-color: var(--hover-color);
+            transform: translateY(-2px);
         }
+
+        button:active {
+            transform: translateY(0);
+        }
+
         button:disabled {
-            background-color: #cccccc;
+            background-color: var(--gray-300);
             cursor: not-allowed;
+            transform: none;
         }
+
         .status-message {
-            text-align: center;
-            padding: 1rem;
-            margin: 1rem auto;
-            max-width: 600px;
-            border-radius: 5px;
-        }
-        .success {
-            background-color: #4CAF50;
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 8px;
             color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1000;
+            animation: fadeIn var(--transition-speed) ease-out;
         }
-        .error {
-            background-color: #f44336;
-            color: white;
+
+        .success { 
+            background-color: var(--success-color);
+            animation: pulse 1s ease-out;
         }
-        #wishlist {
-            opacity: 1;
-            transition: opacity 0.3s ease;
+
+        .error { 
+            background-color: var(--error-color);
+            animation: pulse 1s ease-out;
         }
-        #wishlist.loading {
-            opacity: 0.5;
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            backdrop-filter: blur(4px);
+            animation: fadeIn var(--transition-speed) ease-out;
         }
+
         .modal {
             display: none;
             position: fixed;
@@ -75,44 +210,76 @@
             transform: translate(-50%, -50%);
             background: white;
             padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
             z-index: 1000;
-            max-width: 80%;
+            max-width: 90%;
             width: 500px;
+            animation: fadeIn var(--transition-speed) ease-out;
         }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
+
         .modal h2 {
-            margin-top: 0;
-            color: #6200ea;
+            margin: 0 0 1rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
         }
+
         .modal-content {
             margin: 1rem 0;
-            line-height: 1.5;
+            line-height: 1.6;
         }
-        .modal-button {
-            background-color: #6200ea;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            display: block;
-            margin: 1rem auto 0;
+
+        .modal ol {
+            padding-left: 1.5rem;
         }
-        .bought {
-            opacity: 0.5;
-            text-decoration: line-through;
+
+        .modal li {
+            margin: 0.5rem 0;
+        }
+
+        .modal button {
+            margin-top: 1.5rem;
+        }
+
+        .loading {
+            position: relative;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255,255,255,0.2),
+                transparent
+            );
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+                grid-template-columns: 1fr;
+            }
+
+            header h1 {
+                font-size: 2rem;
+            }
+
+            .modal {
+                width: 85%;
+                padding: 1.5rem;
+            }
         }
     </style>
 </head>
@@ -121,9 +288,8 @@
         <h1>Verlanglijst</h1>
     </header>
     <div id="status-container"></div>
-    <ul id="wishlist"></ul>
+    <div class="container" id="wishlist"></div>
     
-    <!-- Instructions Modal -->
     <div class="modal-overlay" id="modalOverlay"></div>
     <div class="modal" id="instructionsModal">
         <h2>Even je aandacht...</h2>
@@ -138,7 +304,7 @@
             </ol>
             <p>Het item wordt direct voor jou gemarkeerd als 'gekocht' en binnen 5 minuten zien anderen dit ook.</p>
         </div>
-        <button class="modal-button" onclick="closeInstructionsAndProceed()">Begrepen, ga door</button>
+        <button onclick="closeInstructionsAndProceed()">Begrepen, ga door</button>
     </div>
 
     <script>
@@ -148,7 +314,6 @@
         let localBoughtItems = new Set(JSON.parse(localStorage.getItem('boughtItems') || '[]'));
 
         function getLocalData(data) {
-            // Apply local bought status to the data
             return data.map(item => ({
                 ...item,
                 buyer: localBoughtItems.has(item.name) ? 'Gekocht (lokaal)' : item.buyer
@@ -166,14 +331,18 @@
                 const localizedData = getLocalData(data);
                 const list = document.getElementById('wishlist');
                 
-                // Only update if we have new data
                 if (JSON.stringify(localizedData) !== list.dataset.lastData) {
-                    list.innerHTML = localizedData.map(item => 
-                        `<li class="${item.buyer ? 'bought' : ''}">
-                            <span>${item.name}${item.url ? ` - <a href="${item.url}" target="_blank">Link</a>` : ''} - ${item.buyer || "Beschikbaar"}</span>
-                            ${!item.buyer ? `<button onclick="markAsBought('${item.name}', this)">Markeer als gekocht</button>` : ''}
-                        </li>`
-                    ).join('');
+                    list.innerHTML = localizedData.map(item => `
+                        <div class="wishlist-item ${item.buyer ? 'bought' : ''}">
+                            <img src="${item.image}" alt="${item.name}" class="item-image" onerror="this.src='images/placeholder.svg'">
+                            <div class="item-content">
+                                <h2 class="item-title">${item.name}</h2>
+                                ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
+                                <div class="item-status">${item.buyer || "Beschikbaar"}</div>
+                                ${!item.buyer ? `<button onclick="markAsBought('${item.name}', this)">Markeer als gekocht</button>` : ''}
+                            </div>
+                        </div>
+                    `).join('');
                     list.dataset.lastData = JSON.stringify(localizedData);
                 }
                 
@@ -189,7 +358,6 @@
             modal.style.display = 'block';
             overlay.style.display = 'block';
             
-            // Store the data we need for later
             modal.dataset.itemName = itemName;
             modal.dataset.issueUrl = issueUrl;
             modal.dataset.buttonId = buttonElement.id;
@@ -201,24 +369,17 @@
             const itemName = modal.dataset.itemName;
             const issueUrl = modal.dataset.issueUrl;
             
-            // Hide modal
             modal.style.display = 'none';
             overlay.style.display = 'none';
             
-            // Open GitHub issue in new tab
             window.open(issueUrl, '_blank');
-            
-            // Mark item as bought locally
             markItemAsBoughtLocally(itemName);
         }
 
         function markItemAsBoughtLocally(itemName) {
             localBoughtItems.add(itemName);
             localStorage.setItem('boughtItems', JSON.stringify([...localBoughtItems]));
-            
-            // Refresh the display
             fetchWishlist();
-            
             showStatus('Item is lokaal gemarkeerd als gekocht! Anderen zien dit binnen 5 minuten.', 'success');
         }
 
@@ -227,32 +388,23 @@
             isUpdating = true;
             
             buttonElement.disabled = true;
-            document.getElementById('wishlist').classList.add('loading');
             
             try {
-                // Generate unique ID for the button
                 buttonElement.id = 'btn-' + Date.now();
-                
-                // Create GitHub issue URL
                 const issueUrl = `https://github.com/thijssenware/Verlanglijstje/issues/new?title=${encodeURIComponent('Gekocht: ' + itemName)}&body=${encodeURIComponent('Ik heb "' + itemName + '" gekocht. Werk de verlanglijst bij!')}&labels=wishlist`;
-                
-                // Show instructions modal
                 showInstructions(itemName, buttonElement, issueUrl);
                 
-                // Start checking for updates more frequently for the next minute
                 const checkInterval = setInterval(fetchWishlist, 1000);
                 setTimeout(() => {
                     clearInterval(checkInterval);
                     isUpdating = false;
-                    document.getElementById('wishlist').classList.remove('loading');
-                }, 60000); // Check frequently for 1 minute
+                }, 60000);
                 
             } catch (error) {
                 console.error('Error marking item as bought:', error);
                 showStatus('Er is een fout opgetreden. Probeer het later opnieuw.', 'error');
                 buttonElement.disabled = false;
                 isUpdating = false;
-                document.getElementById('wishlist').classList.remove('loading');
             }
         }
 
