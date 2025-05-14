@@ -1,5 +1,11 @@
 [
     {
+        "name": "Voorbeeld Item",
+        "url": "https://www.bol.com/example",
+        "image": null,
+        "reserved": null
+    },
+    {
         "name": "PlayStation 5",
         "url": "https://www.playstation.com/nl-nl/ps5/",
         "image": "images/ps5.jpg",
