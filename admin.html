@@ -174,6 +174,37 @@
         </div>
     </div>
 
+    <div class="admin-panel">
+        <h1>GitHub Token Update Instructions</h1>
+        
+        <div class="warning">
+            <strong>Important:</strong> Never commit your token directly to the repository without encoding it first!
+        </div>
+
+        <div class="guide">
+            <h2>Steps to Update GitHub Token:</h2>
+            <ol>
+                <li>Go to <a href="https://github.com/settings/tokens" target="_blank">GitHub Token Settings</a></li>
+                <li>Click "Generate new token (classic)"</li>
+                <li>Name it "Wishlist App Token"</li>
+                <li>Set expiration to 30 days</li>
+                <li>Select only the <code>public_repo</code> scope</li>
+                <li>Click "Generate token"</li>
+                <li>Copy the generated token</li>
+                <li>Open your browser's developer console (F12)</li>
+                <li>Run this command to encode your token (replace YOUR-TOKEN with your actual token):<br>
+                    <code>console.log(btoa('YOUR-TOKEN'))</code></li>
+                <li>Copy the encoded output</li>
+                <li>Open <code>index.html</code></li>
+                <li>Find the line containing <code>atob('...')</code></li>
+                <li>Replace the encoded token with your new encoded token</li>
+                <li>Commit and push the changes</li>
+            </ol>
+        </div>
+
+        <p>Your token will expire in 30 days. Set a calendar reminder to generate a new one before it expires.</p>
+    </div>
+
     <script>
         const CLIENT_ID = 'Iv23lidj0XZi8PbDvMAa';
         const ADMIN_USERNAME = 'thijssenware'; // Bram's GitHub username

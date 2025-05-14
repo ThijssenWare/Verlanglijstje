@@ -22,5 +22,11 @@
         "url": "",
         "image": "images/zaag.jpeg",
         "reserved": null
+    },
+    {
+        "name": "Mini beamer",
+        "url": "",
+        "image": "images/beamer.jpeg",
+        "reserved": null
     }
 ]

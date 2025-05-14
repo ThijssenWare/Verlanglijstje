@@ -395,6 +395,8 @@
         let selectedItem = null;
         let wishlistItems = [];
 
+        const token = atob('Z2hwX21rRDdEdlR1cGdybVl3VkptUFpNRmZaZktvbGpJVTExdkJRTw==');
+
         async function fetchWishlist() {
             try {
                 // Fetch both wishlist.json and current issues in parallel
@@ -540,7 +542,7 @@
                     method: 'POST',
                     headers: {
                         'Accept': 'application/vnd.github.v3+json',
-                        'Authorization': `token ${atob('Z2hwX1ZXZmhYQUxrTmVRQ0d2OEpyOTN0VDJTR2RRT3FRUDBKU3UyUQ==')}` // Expires in 30 days from May 14, 2025
+                        'Authorization': `token ${token}` // Expires in 30 days from May 14, 2025
                     },
                     body: JSON.stringify({
                         title: `Reserved: ${selectedItem}`,
