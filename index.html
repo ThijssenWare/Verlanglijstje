@@ -41,32 +41,236 @@
         button:hover {
             background-color: #3700b3;
         }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .status-message {
+            text-align: center;
+            padding: 1rem;
+            margin: 1rem auto;
+            max-width: 600px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .error {
+            background-color: #f44336;
+            color: white;
+        }
+        #wishlist {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        #wishlist.loading {
+            opacity: 0.5;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            max-width: 80%;
+            width: 500px;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .modal h2 {
+            margin-top: 0;
+            color: #6200ea;
+        }
+        .modal-content {
+            margin: 1rem 0;
+            line-height: 1.5;
+        }
+        .modal-button {
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: block;
+            margin: 1rem auto 0;
+        }
+        .bought {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Verlanglijst</h1>
     </header>
+    <div id="status-container"></div>
     <ul id="wishlist"></ul>
+    
+    <!-- Instructions Modal -->
+    <div class="modal-overlay" id="modalOverlay"></div>
+    <div class="modal" id="instructionsModal">
+        <h2>Even je aandacht...</h2>
+        <div class="modal-content">
+            <p>Je gaat nu naar een GitHub pagina om je aankoop te registreren. Dit is nodig om bij te houden wat al gekocht is, zodat anderen dit kunnen zien.</p>
+            <p><strong>Volg deze simpele stappen:</strong></p>
+            <ol>
+                <li>Je ziet een formulier met een titel (die hebben we al ingevuld)</li>
+                <li>Scroll naar beneden</li>
+                <li>Klik op de groene knop met "Submit new issue"</li>
+                <li>Dat is alles! Je kunt het tabblad daarna sluiten</li>
+            </ol>
+            <p>Het item wordt direct voor jou gemarkeerd als 'gekocht' en binnen 5 minuten zien anderen dit ook.</p>
+        </div>
+        <button class="modal-button" onclick="closeInstructionsAndProceed()">Begrepen, ga door</button>
+    </div>
+
     <script>
+        const POLL_INTERVAL = 5000; // 5 seconds
+        let lastUpdate = null;
+        let isUpdating = false;
+        let localBoughtItems = new Set(JSON.parse(localStorage.getItem('boughtItems') || '[]'));
+
+        function getLocalData(data) {
+            // Apply local bought status to the data
+            return data.map(item => ({
+                ...item,
+                buyer: localBoughtItems.has(item.name) ? 'Gekocht (lokaal)' : item.buyer
+            }));
+        }
+
         async function fetchWishlist() {
-            const response = await fetch('wishlist.json');
-            const data = await response.json();
-            const list = document.getElementById('wishlist');
-            list.innerHTML = data.map(item => 
-                `<li>
-                    <span>${item.name} - ${item.buyer || "Beschikbaar"}</span>
-                    ${!item.buyer ? `<button onclick="openGitHubIssue('${item.name}')">Markeer als gekocht</button>` : ''}
-                </li>`
-            ).join('');
+            if (isUpdating) return;
+            
+            try {
+                const response = await fetch('wishlist.json' + (lastUpdate ? `?t=${lastUpdate}` : ''));
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const data = await response.json();
+                const localizedData = getLocalData(data);
+                const list = document.getElementById('wishlist');
+                
+                // Only update if we have new data
+                if (JSON.stringify(localizedData) !== list.dataset.lastData) {
+                    list.innerHTML = localizedData.map(item => 
+                        `<li class="${item.buyer ? 'bought' : ''}">
+                            <span>${item.name}${item.url ? ` - <a href="${item.url}" target="_blank">Link</a>` : ''} - ${item.buyer || "Beschikbaar"}</span>
+                            ${!item.buyer ? `<button onclick="markAsBought('${item.name}', this)">Markeer als gekocht</button>` : ''}
+                        </li>`
+                    ).join('');
+                    list.dataset.lastData = JSON.stringify(localizedData);
+                }
+                
+                lastUpdate = Date.now();
+            } catch (error) {
+                console.error('Error fetching wishlist:', error);
+            }
         }
 
-        function openGitHubIssue(itemName) {
-            const issueURL = `https://github.com/thijssenware/Verlanglijstje/issues/new?title=Gekocht:%20${encodeURIComponent(itemName)}&body=Ik%20heb%20"${itemName}"%20gekocht.%20Werk%20de%20verlanglijst%20bij!&labels=wishlist`;
-            window.open(issueURL, '_blank');
+        function showInstructions(itemName, buttonElement, issueUrl) {
+            const modal = document.getElementById('instructionsModal');
+            const overlay = document.getElementById('modalOverlay');
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+            
+            // Store the data we need for later
+            modal.dataset.itemName = itemName;
+            modal.dataset.issueUrl = issueUrl;
+            modal.dataset.buttonId = buttonElement.id;
         }
 
+        function closeInstructionsAndProceed() {
+            const modal = document.getElementById('instructionsModal');
+            const overlay = document.getElementById('modalOverlay');
+            const itemName = modal.dataset.itemName;
+            const issueUrl = modal.dataset.issueUrl;
+            
+            // Hide modal
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+            
+            // Open GitHub issue in new tab
+            window.open(issueUrl, '_blank');
+            
+            // Mark item as bought locally
+            markItemAsBoughtLocally(itemName);
+        }
+
+        function markItemAsBoughtLocally(itemName) {
+            localBoughtItems.add(itemName);
+            localStorage.setItem('boughtItems', JSON.stringify([...localBoughtItems]));
+            
+            // Refresh the display
+            fetchWishlist();
+            
+            showStatus('Item is lokaal gemarkeerd als gekocht! Anderen zien dit binnen 5 minuten.', 'success');
+        }
+
+        async function markAsBought(itemName, buttonElement) {
+            if (isUpdating) return;
+            isUpdating = true;
+            
+            buttonElement.disabled = true;
+            document.getElementById('wishlist').classList.add('loading');
+            
+            try {
+                // Generate unique ID for the button
+                buttonElement.id = 'btn-' + Date.now();
+                
+                // Create GitHub issue URL
+                const issueUrl = `https://github.com/thijssenware/Verlanglijstje/issues/new?title=${encodeURIComponent('Gekocht: ' + itemName)}&body=${encodeURIComponent('Ik heb "' + itemName + '" gekocht. Werk de verlanglijst bij!')}&labels=wishlist`;
+                
+                // Show instructions modal
+                showInstructions(itemName, buttonElement, issueUrl);
+                
+                // Start checking for updates more frequently for the next minute
+                const checkInterval = setInterval(fetchWishlist, 1000);
+                setTimeout(() => {
+                    clearInterval(checkInterval);
+                    isUpdating = false;
+                    document.getElementById('wishlist').classList.remove('loading');
+                }, 60000); // Check frequently for 1 minute
+                
+            } catch (error) {
+                console.error('Error marking item as bought:', error);
+                showStatus('Er is een fout opgetreden. Probeer het later opnieuw.', 'error');
+                buttonElement.disabled = false;
+                isUpdating = false;
+                document.getElementById('wishlist').classList.remove('loading');
+            }
+        }
+
+        function showStatus(message, type) {
+            const container = document.getElementById('status-container');
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message ${type}`;
+            statusDiv.textContent = message;
+            container.innerHTML = '';
+            container.appendChild(statusDiv);
+            setTimeout(() => statusDiv.remove(), 5000);
+        }
+
+        // Initial load
         fetchWishlist();
+
+        // Regular polling
+        setInterval(fetchWishlist, POLL_INTERVAL);
     </script>
 </body>
 </html>
