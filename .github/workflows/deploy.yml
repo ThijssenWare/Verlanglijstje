@@ -29,10 +29,9 @@ jobs:
 
       - name: Create config file
         run: |
-          echo '{
-            "BIN_ID": "${{ secrets.BIN_ID }}",
-            "JSONBIN_API_KEY": "${{ secrets.JSONBIN_API_KEY }}"
-          }' > config.json
+          echo "{\"BIN_ID\":\"${{ secrets.BIN_ID }}\",\"JSONBIN_API_KEY\":\"${{ secrets.JSONBIN_API_KEY }}\"}" > config.json
+          echo "Generated config.json contents (secrets redacted):"
+          cat config.json | sed 's/\(".*": "\)[^"]*\("/\1***\2/g'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
