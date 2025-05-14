@@ -424,10 +424,12 @@
             try {
                 if (config.BIN_ID && config.JSONBIN_API_KEY) {
                     console.log('Fetching wishlist from JSONBin...');
+                    console.log('Using BIN_ID:', config.BIN_ID);
                     const response = await fetch(`https://api.jsonbin.io/v3/b/${config.BIN_ID}/latest`, {
                         method: 'GET',
                         headers: {
-                            'X-Access-Key': config.JSONBIN_API_KEY
+                            'X-Master-Key': config.JSONBIN_API_KEY,
+                            'X-Bin-Meta': false
                         }
                     });
                     
@@ -445,6 +447,7 @@
                     } else if (Array.isArray(jsonResponse)) {
                         wishlistItems = jsonResponse;
                     } else {
+                        console.error('Invalid response format:', jsonResponse);
                         throw new Error('Invalid response format from JSONBin');
                     }
                     
@@ -484,7 +487,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Access-Key': config.JSONBIN_API_KEY
+                        'X-Master-Key': config.JSONBIN_API_KEY
                     },
                     body: JSON.stringify(wishlistItems)
                 });
