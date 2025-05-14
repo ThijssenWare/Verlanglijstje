@@ -6,21 +6,21 @@
         "reserved": null
     },
     {
-        "name": "Geen idee",
-        "url": "https://www.playstation.com/nl-nl/ps5/",
-        "image": "images/ps5.jpg",
-        "buyer": ""
+        "name": "Goede Boormachine",
+        "url": "",
+        "image": "images/boormachine.png",
+        "reserved": null
     },
     {
-        "name": "Persoonlijke herinnering",
-        "url": "https://www.bol.com/nl/nl/p/the-great-gatsby/1001004011831507/",
-        "image": "images/great-gatsby.jpg",
-        "buyer": ""
+        "name": "sokken",
+        "url": "",
+        "image": "images/sok.jpeg",
+        "reserved": null
     },
     {
-        "name": "Geen idee",
-        "url": "https://www.fietsenwinkel.nl/cortina-u1-n3",
-        "image": "images/bicycle.jpg",
-        "buyer": ""
+        "name": "Zaag",
+        "url": "",
+        "image": "images/zaag.jpeg",
+        "reserved": null
     }
 ]

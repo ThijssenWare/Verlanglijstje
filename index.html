@@ -399,14 +399,41 @@
             try {
                 // Fetch both wishlist.json and current issues in parallel
                 const [wishlistResponse, issuesResponse] = await Promise.all([
-                    fetch('wishlist.json'),
-                    fetch('https://api.github.com/repos/thijssenware/Verlanglijstje/issues?state=open&labels=wishlist')
+                    fetch('wishlist.json').catch(error => {
+                        throw new Error(`Error fetching wishlist.json: ${error.message}`);
+                    }),
+                    fetch('https://api.github.com/repos/thijssenware/Verlanglijstje/issues?state=open&labels=wishlist').catch(error => {
+                        throw new Error(`Error fetching GitHub issues: ${error.message}`);
+                    })
                 ]);
 
-                if (!wishlistResponse.ok) throw new Error('Network response was not ok');
+                if (!wishlistResponse.ok) {
+                    throw new Error(`HTTP ${wishlistResponse.status}: ${wishlistResponse.statusText} when fetching wishlist.json`);
+                }
                 
-                wishlistItems = await wishlistResponse.json();
-                const issues = await issuesResponse.json();
+                if (!issuesResponse.ok) {
+                    if (issuesResponse.status === 403) {
+                        console.error('GitHub API rate limit exceeded. Token may be needed.');
+                        // Continue with just the wishlist data
+                    } else {
+                        console.warn(`GitHub API error: ${issuesResponse.status}`);
+                        // Continue with just the wishlist data
+                    }
+                }
+
+                wishlistItems = await wishlistResponse.json().catch(error => {
+                    throw new Error(`Error parsing wishlist.json: ${error.message}`);
+                });
+
+                let issues = [];
+                try {
+                    if (issuesResponse.ok) {
+                        issues = await issuesResponse.json();
+                    }
+                } catch (error) {
+                    console.warn('Could not fetch GitHub issues:', error);
+                    // Continue without issues data
+                }
 
                 // Create a map of current reservations from issues
                 const currentReservations = {};
@@ -451,8 +478,8 @@
                     </div>
                 `).join('');
             } catch (error) {
-                console.error('Error fetching wishlist:', error);
-                showStatus('Er is een fout opgetreden bij het laden van de lijst.', 'error');
+                console.error('Detailed error:', error);
+                showStatus(`Er is een fout opgetreden bij het laden van de lijst: ${error.message}`, 'error');
             }
         }
 
