@@ -1,0 +1,157 @@
+name: Wishlist Manager
+on:
+  issues:
+    types: [opened, edited, closed, deleted]
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'  # Run every 15 minutes
+
+jobs:
+  manage-wishlist:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate App Token
+        id: generate_token
+        uses: tibdex/github-app-token@v1
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Handle Auth and Update Wishlist
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            
+            // Handle authentication issues
+            if (context.eventName === 'issues' && context.payload.issue.labels.some(l => l.name === 'auth')) {
+              const issue = context.payload.issue;
+              if (issue.state === 'open') {
+                const codeMatch = issue.body.match(/Code: (.+)/);
+                if (codeMatch) {
+                  const code = codeMatch[1];
+                  
+                  try {
+                    // Exchange code for token using GitHub App credentials
+                    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+                      method: 'POST',
+                      headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                      },
+                      body: JSON.stringify({
+                        client_id: 'Iv23lidj0XZi8PbDvMAa',
+                        client_secret: process.env.APP_CLIENT_SECRET,
+                        code: code
+                      })
+                    });
+                    
+                    const data = await tokenResponse.json();
+                    if (data.access_token) {
+                      // Add token as a comment and close the issue
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        body: `Token: ${data.access_token}`
+                      });
+                    } else {
+                      // Handle OAuth error
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: issue.number,
+                        body: `Error: Unable to exchange code for token. Error: ${data.error || 'Unknown error'}`
+                      });
+                    }
+                  } catch (e) {
+                    console.error('Error exchanging code:', e);
+                    // Add error comment to issue
+                    await github.rest.issues.createComment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: issue.number,
+                      body: `Error: Authentication failed. Please try logging in again. Technical details: ${e.message}`
+                    });
+                  }
+                  
+                  // Close the auth issue
+                  await github.rest.issues.update({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    state: 'closed'
+                  });
+                }
+              }
+              return; // Skip wishlist processing for auth issues
+            }
+            
+            try {
+              // Read and process wishlist
+              let wishlist = [];
+              try {
+                wishlist = JSON.parse(fs.readFileSync('wishlist.json', 'utf8'));
+              } catch (e) {
+                console.log('No existing wishlist found');
+                wishlist = [];
+              }
+              
+              // Get all issues
+              const issues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'all'
+              });
+              
+              // Process reservations from issues
+              const reservations = {};
+              for (const issue of issues.data) {
+                if (issue.labels.some(label => label.name === 'wishlist')) {
+                  const titleMatch = issue.title.match(/^(?:Reserved|Gekocht):\s+(.+)$/);
+                  if (titleMatch) {
+                    const itemName = titleMatch[1];
+                    if (issue.state === 'open') {
+                      reservations[itemName] = {
+                        name: issue.user.login,
+                        timestamp: issue.created_at,
+                        url: issue.html_url
+                      };
+                    }
+                  }
+                }
+              }
+              
+              // Update wishlist with reservations
+              wishlist = wishlist.map(item => ({
+                ...item,
+                reserved: reservations[item.name] || null
+              }));
+              
+              // Save updated wishlist
+              fs.writeFileSync('wishlist.json', JSON.stringify(wishlist, null, 2));
+              
+              // Only commit if there are actual changes
+              const status = await exec.exec('git', ['status', '--porcelain']);
+              if (status) {
+                await exec.exec('git', ['config', '--global', 'user.email', 'github-actions[bot]@users.noreply.github.com']);
+                await exec.exec('git', ['config', '--global', 'user.name', 'github-actions[bot]']);
+                await exec.exec('git', ['add', 'wishlist.json']);
+                await exec.exec('git', ['commit', '-m', 'Update wishlist reservations']);
+                await exec.exec('git', ['push']);
+              }
+            } catch (error) {
+              console.error('Error in workflow:', error);
+              // Create an issue for the error if it's not an auth issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Workflow Error',
+                body: `An error occurred in the wishlist manager workflow:\n\`\`\`\n${error.stack}\n\`\`\``,
+                labels: ['bug']
+              });
+            }
