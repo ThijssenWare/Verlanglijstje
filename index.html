@@ -1,10 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Welcome!</title>
+    <title>My Wishlist</title>
+    <style>
+        .completed { text-decoration: line-through; color: gray; }
+    </style>
 </head>
 <body>
-    <h1>Hello, friends and family!</h1>
-    <p>Welcome to my GitHub Pages site.</p>
+    <h1>My Wishlist</h1>
+    <ul id="wishlist">
+        <li data-id="1">🎮 PlayStation 5 <button onclick="markAsBought(1)">Bought</button></li>
+        <li data-id="2">📚 The Great Gatsby <button onclick="markAsBought(2)">Bought</button></li>
+        <li data-id="3">🚲 New Bicycle <button onclick="markAsBought(3)">Bought</button></li>
+    </ul>
+
+    <script>
+        function markAsBought(id) {
+            let item = document.querySelector(`[data-id="${id}"]`);
+            let name = prompt("Enter your name to mark it as bought:");
+            if (name) {
+                item.innerHTML = `<span class="completed">${item.innerText} - ${name}</span>`;
+                localStorage.setItem(`wishlist-${id}`, name); // Stores locally (not visible to others)
+            }
+        }
+    </script>
 </body>
 </html>
