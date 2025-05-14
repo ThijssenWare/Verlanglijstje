@@ -1,24 +1,24 @@
 [
     {
-        "name": "Voorbeeld Item",
-        "url": "https://www.bol.com/example",
-        "image": null,
+        "name": "Magnesium Firestarter",
+        "url": "https://www.bol.com/nl/nl/p/hoogwaardige-magnesium-firestarter-luxe-survival-aansteker-vuurmaker-flint-staaf-noodfluitje-en-vonkstaaf-vuursteen-en-strijker-vuurstarter-survival-vuurstarter-ontdek-de-beste-vuurstarters-voor-avonturiers/9300000161316008/?cid=1747226808918-4953915452022&bltgh=qojQUtHTVm9vqbO6OQpKDQ.4_36.37.ProductImage",
+        "image": "images/firestarter.jpg",
         "reserved": null
     },
     {
-        "name": "PlayStation 5",
+        "name": "Geen idee",
         "url": "https://www.playstation.com/nl-nl/ps5/",
         "image": "images/ps5.jpg",
         "buyer": ""
     },
     {
-        "name": "The Great Gatsby",
+        "name": "Persoonlijke herinnering",
         "url": "https://www.bol.com/nl/nl/p/the-great-gatsby/1001004011831507/",
         "image": "images/great-gatsby.jpg",
         "buyer": ""
     },
     {
-        "name": "New Bicycle",
+        "name": "Geen idee",
         "url": "https://www.fietsenwinkel.nl/cortina-u1-n3",
         "image": "images/bicycle.jpg",
         "buyer": ""
