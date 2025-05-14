@@ -457,7 +457,6 @@
                     
                     if (!wishlistItems || wishlistItems.length === 0) {
                         console.error('No items found in response');
-                        // Fallback to local file if JSONBin response is empty
                         return await loadLocalWishlist();
                     }
                     
@@ -537,6 +536,24 @@
             }
         }
 
+        function getBasePath() {
+            // Get the base path for the site
+            const path = window.location.pathname;
+            const basePath = path.endsWith('/') ? path : path + '/';
+            return basePath;
+        }
+
+        function getImagePath(imagePath) {
+            // Handle image paths correctly
+            if (!imagePath) return 'images/placeholder.svg';
+            if (imagePath.startsWith('http')) return imagePath;
+            
+            const basePath = getBasePath();
+            // Remove any leading slashes from the image path
+            const cleanImagePath = imagePath.replace(/^\/+/, '');
+            return `${basePath}${cleanImagePath}`;
+        }
+
         function renderWishlist() {
             const list = document.getElementById('wishlist');
             if (!Array.isArray(wishlistItems)) {
@@ -547,7 +564,8 @@
             
             list.innerHTML = wishlistItems.map((item, index) => `
                 <div class="wishlist-item ${item.reserved ? 'bought' : ''}">
-                    <img src="${item.image}" alt="${item.name}" class="item-image" onerror="this.src='images/placeholder.svg'">
+                    <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image" 
+                         onerror="this.src='${getBasePath()}images/placeholder.svg'">
                     <div class="item-content">
                         <h2 class="item-title">${item.name}</h2>
                         ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
@@ -586,4 +604,3 @@
     </script>
 </body>
 </html>
-``` 
