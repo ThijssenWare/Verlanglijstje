@@ -24,20 +24,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Debug Directory Contents
-        run: |
-          echo "Current directory contents:"
-          ls -la
-          echo "Checking wishlist.json:"
-          cat wishlist.json || echo "wishlist.json not found"
-
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      - name: Replace Environment Variables
+      - name: Create config file
         run: |
-          sed -i "s/'\${{ secrets.BIN_ID }}'/'${{ secrets.BIN_ID }}'/g" index.html
-          sed -i "s/'\${{ secrets.JSONBIN_API_KEY }}'/'${{ secrets.JSONBIN_API_KEY }}'/g" index.html
+          echo '{
+            "BIN_ID": "${{ secrets.BIN_ID }}",
+            "JSONBIN_API_KEY": "${{ secrets.JSONBIN_API_KEY }}"
+          }' > config.json
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
