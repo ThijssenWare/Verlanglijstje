@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
-            --primary-color: #00b300;
+            --primary-color: #000fb3;
             --hover-color: #3700b3;
             --background-color: #f4f4f9;
             --card-background: white;
@@ -408,7 +408,11 @@
         async function fetchWishlist() {
             try {
                 console.log('Fetching wishlist...');
-                const response = await fetch('wishlist.json');
+                // Get the base URL for GitHub Pages
+                const basePath = window.location.pathname.endsWith('/') 
+                    ? window.location.pathname 
+                    : window.location.pathname + '/';
+                const response = await fetch(basePath + 'wishlist.json');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -524,4 +528,3 @@
     </script>
 </body>
 </html>
-``` 
