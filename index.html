@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
-            --primary-color: #1e7a91;
+            --primary-color: #b27a20;
             --hover-color: #3700b3;
             --background-color: #f4f4f9;
             --card-background: white;
@@ -425,12 +425,14 @@
                 if (config.BIN_ID && config.JSONBIN_API_KEY) {
                     console.log('Fetching wishlist from JSONBin...');
                     const response = await fetch(`https://api.jsonbin.io/v3/b/${config.BIN_ID}/latest`, {
+                        method: 'GET',
                         headers: {
-                            'X-Master-Key': config.JSONBIN_API_KEY
+                            'X-Access-Key': config.JSONBIN_API_KEY
                         }
                     });
                     
                     if (!response.ok) {
+                        console.error('JSONBin response:', response.status, response.statusText);
                         throw new Error(`JSONBin Error: ${response.status}`);
                     }
                     
@@ -482,7 +484,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Master-Key': config.JSONBIN_API_KEY
+                        'X-Access-Key': config.JSONBIN_API_KEY
                     },
                     body: JSON.stringify(wishlistItems)
                 });

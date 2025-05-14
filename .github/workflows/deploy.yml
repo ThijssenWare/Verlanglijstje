@@ -29,7 +29,8 @@ jobs:
 
       - name: Create config file
         run: |
-          printf '{"BIN_ID":"%s","JSONBIN_API_KEY":"%s"}' "${{ secrets.BIN_ID }}" "${{ secrets.JSONBIN_API_KEY }}" > config.json
+          echo '{"BIN_ID":"${{ secrets.BIN_ID }}","JSONBIN_API_KEY":"${{ secrets.JSONBIN_API_KEY }}"}' > config.json
+          echo "Config file created successfully"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
