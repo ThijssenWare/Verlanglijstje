@@ -1,0 +1,28 @@
+name: Update Wishlist
+on:
+  schedule:
+    - cron: '0 * * * *'  # Runs every hour
+  workflow_dispatch:  # Allows manual execution
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Get Wishlist Issues
+        run: |
+          curl -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/ThijssenWare/Verlanglijstje/tree/main/.github/ISSUE_TEMPLATE \
+            # https://api.github.com/repos/YOUR-USERNAME/YOUR-REPO/issues \
+            | jq '[.[] | select(.labels[].name == "wishlist") | {name: .body | split("\n")[0], buyer: .user.login}]' \
+            > wishlist.json
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+          git add wishlist.json
+          git commit -m "Updated wishlist from Issues"
+          git push origin main

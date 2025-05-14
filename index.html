@@ -2,27 +2,34 @@
 <html>
 <head>
     <title>My Wishlist</title>
-    <style>
-        .completed { text-decoration: line-through; color: gray; }
-    </style>
 </head>
 <body>
-    <h1>My Wishlist</h1>
-    <ul id="wishlist">
-        <li data-id="1">🎮 PlayStation 5 <button onclick="markAsBought(1)">Bought</button></li>
-        <li data-id="2">📚 The Great Gatsby <button onclick="markAsBought(2)">Bought</button></li>
-        <li data-id="3">🚲 New Bicycle <button onclick="markAsBought(3)">Bought</button></li>
-    </ul>
-
+    <h1>Wishlist</h1>
+    <ul id="wishlist"></ul>
     <script>
-        function markAsBought(id) {
-            let item = document.querySelector(`[data-id="${id}"]`);
-            let name = prompt("Enter your name to mark it as bought:");
-            if (name) {
-                item.innerHTML = `<span class="completed">${item.innerText} - ${name}</span>`;
-                localStorage.setItem(`wishlist-${id}`, name); // Stores locally (not visible to others)
-            }
+        async function fetchWishlist() {
+            const response = await fetch('wishlist.json');
+            const data = await response.json();
+            const list = document.getElementById('wishlist');
+            list.innerHTML = data.map(item => 
+                `<li>${item.name} - ${item.buyer || "Available"}</li>`
+            ).join('');
         }
+        fetchWishlist();
     </script>
 </body>
 </html>
+
+
+<ul>
+    <li>🎮 PlayStation 5 <button onclick="openGitHubIssue('PlayStation 5')">Bought</button></li>
+    <li>📚 The Great Gatsby <button onclick="openGitHubIssue('The Great Gatsby')">Bought</button></li>
+    <li>🚲 New Bicycle <button onclick="openGitHubIssue('New Bicycle')">Bought</button></li>
+</ul>
+
+<script>
+function openGitHubIssue(itemName) {
+    const issueURL = `https://github.com/YOUR-USERNAME/YOUR-REPO/issues/new?title=Bought:%20${encodeURIComponent(itemName)}&body=I%20bought%20"${itemName}".%20Please%20update%20the%20wishlist!`;
+    window.open(issueURL, '_blank');
+}
+</script>
