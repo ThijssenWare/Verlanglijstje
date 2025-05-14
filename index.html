@@ -429,8 +429,7 @@
                         method: 'GET',
                         headers: {
                             'X-Master-Key': config.JSONBIN_API_KEY,
-                            'X-Bin-Meta': false,
-                            'X-JSON-Path': '$'
+                            'X-Bin-Meta': false
                         }
                     });
                     
@@ -446,27 +445,25 @@
                     
                     // Handle JSONBin v3 response format
                     if (jsonResponse.record && Array.isArray(jsonResponse.record)) {
+                        console.log('Found record in response');
                         wishlistItems = jsonResponse.record;
                     } else if (Array.isArray(jsonResponse)) {
+                        console.log('Response is a direct array');
                         wishlistItems = jsonResponse;
                     } else {
                         console.error('Invalid response format:', jsonResponse);
                         throw new Error('Invalid response format from JSONBin');
                     }
                     
+                    if (!wishlistItems || wishlistItems.length === 0) {
+                        console.error('No items found in response');
+                        // Fallback to local file if JSONBin response is empty
+                        return await loadLocalWishlist();
+                    }
+                    
                     console.log('Processed wishlist items:', wishlistItems);
                 } else {
-                    console.log('Falling back to local file...');
-                    const basePath = window.location.pathname.endsWith('/') 
-                        ? window.location.pathname 
-                        : window.location.pathname + '/';
-                    const localResponse = await fetch(basePath + 'wishlist.json');
-                    if (!localResponse.ok) {
-                        throw new Error(`HTTP ${localResponse.status}`);
-                    }
-                    const jsonResponse = await localResponse.json();
-                    console.log('Local file response:', jsonResponse);
-                    wishlistItems = jsonResponse;
+                    await loadLocalWishlist();
                 }
 
                 if (!Array.isArray(wishlistItems)) {
@@ -478,7 +475,23 @@
             } catch (error) {
                 console.error('Error:', error);
                 showStatus(`Er is een fout opgetreden bij het laden van de lijst: ${error.message}`, 'error');
+                await loadLocalWishlist();
             }
+        }
+
+        async function loadLocalWishlist() {
+            console.log('Loading from local file...');
+            const basePath = window.location.pathname.endsWith('/') 
+                ? window.location.pathname 
+                : window.location.pathname + '/';
+            const localResponse = await fetch(basePath + 'wishlist.json');
+            if (!localResponse.ok) {
+                throw new Error(`HTTP ${localResponse.status}`);
+            }
+            const jsonResponse = await localResponse.json();
+            console.log('Local file response:', jsonResponse);
+            wishlistItems = jsonResponse;
+            renderWishlist();
         }
 
         async function updateWishlist(itemIndex, reservedBy) {
@@ -573,3 +586,4 @@
     </script>
 </body>
 </html>
+``` 
