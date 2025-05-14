@@ -203,7 +203,7 @@
         }
 
         .modal {
-            display: none;
+            display: block;
             position: fixed;
             top: 50%;
             left: 50%;
@@ -462,13 +462,16 @@
         
         function showModal(itemName) {
             selectedItem = itemName;
-            document.getElementById('buyerModal').style.display = 'block';
+            const modalOverlay = document.getElementById('buyerModal');
+            modalOverlay.style.display = 'block';  // Show the overlay
             document.getElementById('buyerName').focus();
         }
 
         function closeModal() {
-            document.getElementById('buyerModal').style.display = 'none';
+            const modalOverlay = document.getElementById('buyerModal');
+            modalOverlay.style.display = 'none';  // Hide the overlay
             selectedItem = null;
+            document.getElementById('buyerName').value = '';  // Clear the input
         }
 
         async function confirmReservation() {
