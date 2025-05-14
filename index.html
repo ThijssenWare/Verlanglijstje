@@ -281,50 +281,135 @@
                 padding: 1.5rem;
             }
         }
+
+        .intro-text {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            animation: fadeIn var(--transition-speed) ease-out;
+        }
+
+        .name-input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 1rem 0;
+            border: 2px solid var(--gray-200);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color var(--transition-speed) ease;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .undo-button {
+            background-color: var(--error-color);
+            margin-top: 0.5rem;
+        }
+
+        .undo-button:hover {
+            background-color: #d32f2f;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .contact-info {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .claimed-by {
+            font-style: italic;
+            color: var(--success-color);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .button-group button {
+            margin: 0;
+        }
+
+        .unclaim-button {
+            background-color: var(--error-color);
+        }
+
+        .unclaim-button:hover {
+            background-color: #d32f2f;
+        }
+
+        #contactEmail {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
     </style>
 </head>
 <body>
     <header>
         <h1>Verlanglijst</h1>
     </header>
+    
+    <div class="intro-text">
+        <h2>Welkom!</h2>
+        <p>Jij bent op deze pagina omdat je hebt gevraagd wat voor cadeau wensen Bram heeft. 
+           Hieronder vind je een overzicht van alle wensen. Als je iets wilt kopen, klik dan op de knop "Reserveer cadeau" 
+           bij het betreffende item.</p>
+        <p>Laat je naam achter zodat anderen kunnen zien wat al gereserveerd is.</p>
+        <p id="contactInfo" class="contact-info">
+            Als je een cadeau hebt gereserveerd, laat dit dan even weten aan Bram om te bevestigen dat je het cadeau gaat kopen.
+        </p>
+    </div>
+
     <div id="status-container"></div>
     <div class="container" id="wishlist"></div>
     
     <div class="modal-overlay" id="modalOverlay"></div>
-    <div class="modal" id="instructionsModal">
-        <h2>Even je aandacht...</h2>
+    <div class="modal" id="claimModal">
+        <h2>Cadeau Reserveren</h2>
         <div class="modal-content">
-            <p>Je gaat nu naar een GitHub pagina om je aankoop te registreren. Dit is nodig om bij te houden wat al gekocht is, zodat anderen dit kunnen zien.</p>
-            <p><strong>Volg deze simpele stappen:</strong></p>
-            <ol>
-                <li>Je ziet een formulier met een titel (die hebben we al ingevuld)</li>
-                <li>Scroll naar beneden</li>
-                <li>Klik op de groene knop met "Submit new issue"</li>
-                <li>Dat is alles! Je kunt het tabblad daarna sluiten</li>
-            </ol>
-            <p>Het item wordt direct voor jou gemarkeerd als 'gekocht' en binnen 5 minuten zien anderen dit ook.</p>
+            <p>Vul je naam in om dit cadeau te reserveren:</p>
+            <form class="modal-form" onsubmit="handleClaimSubmit(event)">
+                <div>
+                    <label for="claimerName">Je naam:</label>
+                    <input type="text" id="claimerName" class="name-input" required placeholder="Jouw naam" />
+                </div>
+                <div class="button-group">
+                    <button type="button" class="undo-button" onclick="closeClaimModal()">Annuleren</button>
+                    <button type="submit">Bevestig Reservering</button>
+                </div>
+            </form>
         </div>
-        <button onclick="closeInstructionsAndProceed()">Begrepen, ga door</button>
     </div>
 
     <script>
-        const POLL_INTERVAL = 5000; // 5 seconds
-        let lastUpdate = null;
-        let isUpdating = false;
-        let localBoughtItems = new Set(JSON.parse(localStorage.getItem('boughtItems') || '[]'));
+        const STORAGE_KEY = 'wishlistClaims';
+        let claims = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
 
         function getLocalData(data) {
             return data.map(item => ({
                 ...item,
-                buyer: localBoughtItems.has(item.name) ? 'Gekocht (lokaal)' : item.buyer
+                claim: claims[item.name] || null
             }));
         }
 
         async function fetchWishlist() {
-            if (isUpdating) return;
-            
             try {
-                const response = await fetch('wishlist.json' + (lastUpdate ? `?t=${lastUpdate}` : ''));
+                const response = await fetch('wishlist.json');
                 if (!response.ok) throw new Error('Network response was not ok');
                 
                 const data = await response.json();
@@ -333,79 +418,73 @@
                 
                 if (JSON.stringify(localizedData) !== list.dataset.lastData) {
                     list.innerHTML = localizedData.map(item => `
-                        <div class="wishlist-item ${item.buyer ? 'bought' : ''}">
+                        <div class="wishlist-item ${item.claim ? 'bought' : ''}">
                             <img src="${item.image}" alt="${item.name}" class="item-image" onerror="this.src='images/placeholder.svg'">
                             <div class="item-content">
                                 <h2 class="item-title">${item.name}</h2>
                                 ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
-                                <div class="item-status">${item.buyer || "Beschikbaar"}</div>
-                                ${!item.buyer ? `<button onclick="markAsBought('${item.name}', this)">Markeer als gekocht</button>` : ''}
+                                <div class="item-status">
+                                    ${item.claim 
+                                        ? `<span class="claimed-by">Gereserveerd door: ${item.claim.name}</span>
+                                           ${item.claim.name === localStorage.getItem('myName') 
+                                               ? `<button class="unclaim-button" onclick="unclaimGift('${item.name}')">Reservering Annuleren</button>` 
+                                               : ''}`
+                                        : `<button onclick="showClaimModal('${item.name}')">Reserveer Cadeau</button>`}
+                                </div>
                             </div>
                         </div>
                     `).join('');
                     list.dataset.lastData = JSON.stringify(localizedData);
                 }
-                
-                lastUpdate = Date.now();
             } catch (error) {
                 console.error('Error fetching wishlist:', error);
+                showStatus('Er is een fout opgetreden bij het laden van de lijst.', 'error');
             }
         }
 
-        function showInstructions(itemName, buttonElement, issueUrl) {
-            const modal = document.getElementById('instructionsModal');
+        function showClaimModal(itemName) {
+            const modal = document.getElementById('claimModal');
             const overlay = document.getElementById('modalOverlay');
+            modal.dataset.itemName = itemName;
+            
+            // Pre-fill with previous value if available
+            const myName = localStorage.getItem('myName');
+            if (myName) document.getElementById('claimerName').value = myName;
+            
             modal.style.display = 'block';
             overlay.style.display = 'block';
-            
-            modal.dataset.itemName = itemName;
-            modal.dataset.issueUrl = issueUrl;
-            modal.dataset.buttonId = buttonElement.id;
         }
 
-        function closeInstructionsAndProceed() {
-            const modal = document.getElementById('instructionsModal');
+        function closeClaimModal() {
+            const modal = document.getElementById('claimModal');
             const overlay = document.getElementById('modalOverlay');
-            const itemName = modal.dataset.itemName;
-            const issueUrl = modal.dataset.issueUrl;
-            
             modal.style.display = 'none';
             overlay.style.display = 'none';
-            
-            window.open(issueUrl, '_blank');
-            markItemAsBoughtLocally(itemName);
         }
 
-        function markItemAsBoughtLocally(itemName) {
-            localBoughtItems.add(itemName);
-            localStorage.setItem('boughtItems', JSON.stringify([...localBoughtItems]));
+        function handleClaimSubmit(event) {
+            event.preventDefault();
+            const modal = document.getElementById('claimModal');
+            const itemName = modal.dataset.itemName;
+            const name = document.getElementById('claimerName').value;
+
+            // Store claim
+            claims[itemName] = { name, timestamp: Date.now() };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(claims));
+            
+            // Store user name for pre-filling next time
+            localStorage.setItem('myName', name);
+
+            closeClaimModal();
+            showStatus(`Je hebt "${itemName}" gereserveerd! Laat even aan Bram weten dat je dit cadeau gaat kopen.`, 'success');
             fetchWishlist();
-            showStatus('Item is lokaal gemarkeerd als gekocht! Anderen zien dit binnen 5 minuten.', 'success');
         }
 
-        async function markAsBought(itemName, buttonElement) {
-            if (isUpdating) return;
-            isUpdating = true;
-            
-            buttonElement.disabled = true;
-            
-            try {
-                buttonElement.id = 'btn-' + Date.now();
-                const issueUrl = `https://github.com/thijssenware/Verlanglijstje/issues/new?title=${encodeURIComponent('Gekocht: ' + itemName)}&body=${encodeURIComponent('Ik heb "' + itemName + '" gekocht. Werk de verlanglijst bij!')}&labels=wishlist`;
-                showInstructions(itemName, buttonElement, issueUrl);
-                
-                const checkInterval = setInterval(fetchWishlist, 1000);
-                setTimeout(() => {
-                    clearInterval(checkInterval);
-                    isUpdating = false;
-                }, 60000);
-                
-            } catch (error) {
-                console.error('Error marking item as bought:', error);
-                showStatus('Er is een fout opgetreden. Probeer het later opnieuw.', 'error');
-                buttonElement.disabled = false;
-                isUpdating = false;
-            }
+        function unclaimGift(itemName) {
+            delete claims[itemName];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(claims));
+            showStatus('Je reservering is geannuleerd.', 'success');
+            fetchWishlist();
         }
 
         function showStatus(message, type) {
@@ -420,9 +499,6 @@
 
         // Initial load
         fetchWishlist();
-
-        // Regular polling
-        setInterval(fetchWishlist, POLL_INTERVAL);
     </script>
 </body>
 </html>
