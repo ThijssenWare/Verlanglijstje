@@ -324,10 +324,11 @@
         }
 
         .contact-info {
-            background: var(--gray-100);
+            background-color: #f0f6fc;
             padding: 1rem;
             border-radius: 8px;
-            margin-top: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #dbe7f7;
         }
 
         .claimed-by {
@@ -364,6 +365,15 @@
             width: auto;
             margin: 1rem 0;
         }
+
+        .github-login {
+            text-align: center;
+            margin: 1rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -373,288 +383,61 @@
     
     <div class="intro-text">
         <h2>Welkom!</h2>
-        <p>Welkom op mijn verlanglijstje! Je kunt hier zien wat ik graag zou willen hebben.</p>
-        <p>Als je iets wilt kopen, klik dan op "Ik ga dit kopen" bij het item. Zo weten anderen dat het al gekozen is.</p>
+        <p>Jij bent op deze site omdat je gevraagd had of Bram enige cadeau wensen had. Je kunt hier zien wat ik graag zou willen hebben.</p>
+    </div>
+
+    <div class="contact-info">
+        <p>💡 Zie je iets dat je wilt kopen? Stuur me even een berichtje naar mij, 
+           dan kan ik het markeren als gekozen om dubbele cadeaus te voorkomen!</p>
     </div>
 
     <div id="status-container"></div>
     <div class="container" id="wishlist"></div>
 
-    <div class="modal-overlay" id="buyerModal">
-        <div class="modal">
-            <h2>Wie ben je?</h2>
-            <div class="modal-form">
-                <input type="text" id="buyerName" class="name-input" placeholder="Je naam" required>
-                <button onclick="confirmReservation()">Bevestigen</button>
-                <button class="unclaim-button" onclick="closeModal()">Annuleren</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        let selectedItem = null;
         let wishlistItems = [];
-
-        const token = atob('Z2hwX21rRDdEdlR1cGdybVl3VkptUFpNRmZaZktvbGpJVTExdkJRTw==');
-
-        async function testGitHubToken() {
-            try {
-                const response = await fetch('https://api.github.com/user', {
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Authorization': `token ${token}`
-                    }
-                });
-                
-                if (response.status === 401) {
-                    console.error('Token authentication failed: Invalid token');
-                    await handleTokenExpired();
-                    return false;
-                } else if (!response.ok) {
-                    console.error(`GitHub API error: ${response.status}`);
-                    return false;
-                }
-                
-                console.log('Token authentication successful!');
-                return true;
-            } catch (error) {
-                console.error('Token test failed:', error);
-                return false;
-            }
-        }
-
+        
         async function fetchWishlist() {
             try {
-                // Fetch both wishlist.json and current issues in parallel
-                const [wishlistResponse, issuesResponse] = await Promise.all([
-                    fetch('wishlist.json').catch(error => {
-                        throw new Error(`Error fetching wishlist.json: ${error.message}`);
-                    }),
-                    fetch('https://api.github.com/repos/thijssenware/Verlanglijstje/issues?state=open&labels=wishlist').catch(error => {
-                        throw new Error(`Error fetching GitHub issues: ${error.message}`);
-                    })
-                ]);
-
-                if (!wishlistResponse.ok) {
-                    throw new Error(`HTTP ${wishlistResponse.status}: ${wishlistResponse.statusText} when fetching wishlist.json`);
+                const response = await fetch('wishlist.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                if (!issuesResponse.ok) {
-                    if (issuesResponse.status === 403) {
-                        console.error('GitHub API rate limit exceeded. Token may be needed.');
-                        // Continue with just the wishlist data
-                    } else {
-                        console.warn(`GitHub API error: ${issuesResponse.status}`);
-                        // Continue with just the wishlist data
-                    }
-                }
+                wishlistItems = await response.json();
+                renderWishlist();
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`Er is een fout opgetreden: ${error.message}`, 'error');
+            }
+        }
 
-                wishlistItems = await wishlistResponse.json().catch(error => {
-                    throw new Error(`Error parsing wishlist.json: ${error.message}`);
-                });
-
-                let issues = [];
-                try {
-                    if (issuesResponse.ok) {
-                        issues = await issuesResponse.json();
-                    }
-                } catch (error) {
-                    console.warn('Could not fetch GitHub issues:', error);
-                    // Continue without issues data
-                }
-
-                // Create a map of current reservations from issues
-                const currentReservations = {};
-                for (const issue of issues) {
-                    const titleMatch = issue.title.match(/^(?:Reserved|Gekocht):\s+(.+)$/);
-                    if (titleMatch) {
-                        const itemName = titleMatch[1];
-                        const buyerMatch = issue.body.match(/(?:Gekocht|Reserved) door: (.+)/);
-                        const buyerName = buyerMatch ? buyerMatch[1] : 'Unknown';
-                        currentReservations[itemName] = {
-                            name: buyerName,
-                            timestamp: issue.created_at,
-                            url: issue.html_url
-                        };
-                    }
-                }
-
-                // Update wishlist items with current reservations
-                wishlistItems = wishlistItems.map(item => ({
-                    ...item,
-                    reserved: currentReservations[item.name] || item.reserved
-                }));
-
-                // Render the updated list
-                const list = document.getElementById('wishlist');
-                list.innerHTML = wishlistItems.map(item => `
-                    <div class="wishlist-item ${item.reserved ? 'bought' : ''}">
-                        <img src="${item.image}" alt="${item.name}" class="item-image" onerror="this.src='images/placeholder.svg'">
-                        <div class="item-content">
-                            <h2 class="item-title">${item.name}</h2>
-                            ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
-                            <div class="item-status">
-                                ${item.reserved 
-                                    ? `<span class="claimed-by">Gekocht door: ${item.reserved.name}</span>
-                                       <button class="unclaim-button" onclick="unreserveItem('${item.name}', '${item.reserved.name}')">
-                                         Reservering Annuleren
-                                       </button>`
-                                    : `<button onclick="reserveItem('${item.name}')">Ik ga dit kopen</button>`
-                                }
-                            </div>
+        function renderWishlist() {
+            const list = document.getElementById('wishlist');
+            list.innerHTML = wishlistItems.map(item => `
+                <div class="wishlist-item ${item.reserved ? 'bought' : ''}">
+                    <img src="${item.image}" alt="${item.name}" class="item-image" onerror="this.src='images/placeholder.svg'">
+                    <div class="item-content">
+                        <h2 class="item-title">${item.name}</h2>
+                        ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
+                        <div class="item-status">
+                            ${item.reserved 
+                                ? `<span class="claimed-by">Gekocht door: ${item.reserved.name}</span>`
+                                : '<span class="available">Nog beschikbaar</span>'
+                            }
                         </div>
                     </div>
-                `).join('');
-            } catch (error) {
-                console.error('Detailed error:', error);
-                showStatus(`Er is een fout opgetreden bij het laden van de lijst: ${error.message}`, 'error');
-            }
+                </div>
+            `).join('');
         }
 
-        function reserveItem(itemName) {
-            showModal(itemName);
-        }
-        
-        function showModal(itemName) {
-            selectedItem = itemName;
-            const modalOverlay = document.getElementById('buyerModal');
-            modalOverlay.style.display = 'block';  // Show the overlay
-            document.getElementById('buyerName').focus();
-        }
-
-        function closeModal() {
-            const modalOverlay = document.getElementById('buyerModal');
-            modalOverlay.style.display = 'none';  // Hide the overlay
-            selectedItem = null;
-            document.getElementById('buyerName').value = '';  // Clear the input
-        }
-
-        async function handleTokenExpired() {
-            const adminMessage = `Token expired! To fix this:
-1. Go to https://github.com/settings/tokens
-2. Generate new token (classic)
-3. Select 'public_repo' permission
-4. Copy the new token
-5. Base64 encode it (use btoa('your-token') in browser console)
-6. Replace the token in index.html
-7. Commit and push the changes`;
-            
-            console.error(adminMessage);
-            showStatus('Administrator: Token expired. Check console for instructions.', 'error');
-            
-            // If admin.html exists, redirect admins there
-            try {
-                const adminResponse = await fetch('admin.html', { method: 'HEAD' });
-                if (adminResponse.ok) {
-                    if (confirm('Token expired. Open admin page for instructions?')) {
-                        window.location.href = 'admin.html';
-                    }
-                }
-            } catch (e) {
-                // admin.html doesn't exist, that's ok
-            }
-        }
-
-        async function confirmReservation() {
-            const buyerName = document.getElementById('buyerName').value.trim();
-            if (!buyerName) {
-                showStatus('Vul alstublieft je naam in.', 'error');
-                return;
-            }
-
-            try {
-                // Create GitHub issue directly through the API
-                const response = await fetch('https://api.github.com/repos/thijssenware/Verlanglijstje/issues', {
-                    method: 'POST',
-                    headers: {
-                        'Accept': 'application/vnd.github.v3+json',
-                        'Authorization': `token ${token}` // Expires in 30 days from May 14, 2025
-                    },
-                    body: JSON.stringify({
-                        title: `Reserved: ${selectedItem}`,
-                        body: `Gekocht door: ${buyerName}`,
-                        labels: ['wishlist']
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    if (response.status === 401) {
-                        await handleTokenExpired();
-                        return;
-                    }
-                    throw new Error(errorData.message || 'Failed to create issue');
-                }
-
-                showStatus(`Je hebt "${selectedItem}" gereserveerd!`, 'success');
-                closeModal();
-
-                // Update the UI immediately
-                const item = wishlistItems.find(i => i.name === selectedItem);
-                if (item) {
-                    item.reserved = {
-                        name: buyerName,
-                        timestamp: new Date().toISOString()
-                    };
-                }
-                
-                // Refresh to show changes
-                fetchWishlist();
-
-            } catch (error) {
-                console.error('Error reserving item:', error);
-                if (error.message?.includes('Bad credentials')) {
-                    await handleTokenExpired();
-                } else {
-                    showStatus('Er is een fout opgetreden bij het reserveren. Probeer het later nog eens.', 'error');
-                }
-            }
-        }
-
-        async function unreserveItem(itemName, buyerName) {
-            if (confirm(`Weet je zeker dat je de reservering van "${itemName}" wilt annuleren?`)) {
-                try {
-                    const response = await fetch(`https://api.github.com/repos/thijssenware/Verlanglijstje/issues?state=open&labels=wishlist`);
-                    const issues = await response.json();
-
-                    const issue = issues.find(i => i.title === `Reserved: ${itemName}`);
-                    if (issue) {
-                        await fetch(`https://api.github.com/repos/thijssenware/Verlanglijstje/issues/${issue.number}`, {
-                            method: 'PATCH',
-                            headers: {
-                                'Accept': 'application/vnd.github.v3+json',
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                state: 'closed'
-                            })
-                        });
-
-                        showStatus('Reservering geannuleerd.', 'success');
-                        fetchWishlist(); // Refresh the list
-                    }
-                } catch (error) {
-                    console.error('Error unreserving item:', error);
-                    showStatus('Er is een fout opgetreden bij het annuleren van de reservering.', 'error');
-                }
-            }
-        }
-
-        function showStatus(message, type) {
+        function showStatus(message, type = 'info') {
             const container = document.getElementById('status-container');
-            const statusDiv = document.createElement('div');
-            statusDiv.className = `status-message ${type}`;
-            statusDiv.textContent = message;
-            container.innerHTML = '';
-            container.appendChild(statusDiv);
-            setTimeout(() => statusDiv.remove(), 5000);
+            container.innerHTML = `<div class="status ${type}">${message}</div>`;
         }
 
-        // Initial load
-        fetchWishlist();
-        
-        // Update check interval to 15 seconds for more responsive updates
-        setInterval(fetchWishlist, 15000);
+        // Load wishlist when page loads
+        window.onload = fetchWishlist;
     </script>
 </body>
 </html>
