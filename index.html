@@ -1,10 +1,52 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Wishlist</title>
+    <title>Mijn Verlanglijst</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        header {
+            background-color: #6200ea;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            background: white;
+            margin: 1rem auto;
+            padding: 1rem;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        button {
+            background-color: #6200ea;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #3700b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Wishlist</h1>
+    <header>
+        <h1>Verlanglijst</h1>
+    </header>
     <ul id="wishlist"></ul>
     <script>
         async function fetchWishlist() {
@@ -12,24 +54,19 @@
             const data = await response.json();
             const list = document.getElementById('wishlist');
             list.innerHTML = data.map(item => 
-                `<li>${item.name} - ${item.buyer || "Available"}</li>`
+                `<li>
+                    <span>${item.name} - ${item.buyer || "Beschikbaar"}</span>
+                    ${!item.buyer ? `<button onclick="openGitHubIssue('${item.name}')">Markeer als gekocht</button>` : ''}
+                </li>`
             ).join('');
         }
+
+        function openGitHubIssue(itemName) {
+            const issueURL = `https://github.com/thijssenware/Verlanglijstje/issues/new?title=Gekocht:%20${encodeURIComponent(itemName)}&body=Ik%20heb%20"${itemName}"%20gekocht.%20Werk%20de%20verlanglijst%20bij!&labels=wishlist`;
+            window.open(issueURL, '_blank');
+        }
+
         fetchWishlist();
     </script>
 </body>
 </html>
-
-
-<ul>
-    <li>🎮 PlayStation 5 <button onclick="openGitHubIssue('PlayStation 5')">Bought</button></li>
-    <li>📚 The Great Gatsby <button onclick="openGitHubIssue('The Great Gatsby')">Bought</button></li>
-    <li>🚲 New Bicycle <button onclick="openGitHubIssue('New Bicycle')">Bought</button></li>
-</ul>
-
-<script>
-function openGitHubIssue(itemName) {
-    const issueURL = `https://github.com/YOUR-USERNAME/YOUR-REPO/issues/new?title=Bought:%20${encodeURIComponent(itemName)}&body=I%20bought%20"${itemName}".%20Please%20update%20the%20wishlist!`;
-    window.open(issueURL, '_blank');
-}
-</script>
