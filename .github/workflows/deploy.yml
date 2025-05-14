@@ -34,6 +34,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      - name: Replace Environment Variables
+        run: |
+          sed -i "s/'\${{ secrets.BIN_ID }}'/'${{ secrets.BIN_ID }}'/g" index.html
+          sed -i "s/'\${{ secrets.JSONBIN_API_KEY }}'/'${{ secrets.JSONBIN_API_KEY }}'/g" index.html
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
