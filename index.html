@@ -414,7 +414,19 @@
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
                 
-                wishlistItems = await response.json();
+                const text = await response.text();
+                try {
+                    wishlistItems = JSON.parse(text);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    console.log('Problematic JSON text:', text);
+                    throw new Error(`JSON parsing failed: ${parseError.message}`);
+                }
+
+                if (!Array.isArray(wishlistItems)) {
+                    throw new Error('Wishlist data is not an array');
+                }
+
                 console.log('Wishlist loaded:', wishlistItems);
                 renderWishlist();
             } catch (error) {
@@ -512,3 +524,4 @@
     </script>
 </body>
 </html>
+``` 
