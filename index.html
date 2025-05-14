@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         :root {
-            --primary-color: #b27a20;
+            --primary-color: #661dc6;
             --hover-color: #0009b3;
             --background-color: #f4f4f9;
             --card-background: white;
@@ -388,7 +388,7 @@
         <div class="info-section" style="margin-top: 1.5rem; padding: 1.5rem; background: #f8f9fa; border-radius: 12px; border: 1px solid #e9ecef;">
             <h3 style="color: var(--primary-color); margin-top: 0;">📝 Hoe werkt het?</h3>
             <p>1. Bekijk de items in de lijst hieronder<br>
-               2. Vind je iets leuks? Klik op "Ik wil dit kopen" en vul je naam in<br>
+               2. Vind je iets leuks? Klik op "Ik wil dit kopen" en vul je naam in of houd het geheim wie het geeft<br>
                3. Het item wordt dan direct voor jou gereserveerd<br>
                4. Heb je je bedacht? Je kunt je reservering altijd weer annuleren</p>
         </div>
@@ -563,7 +563,7 @@
                                         <span class="claimed-by">Gekocht door: ${item.reserved.name}</span>
                                         <button class="unclaim-button" onclick="unclaimItem(${index})">Annuleer reservering</button>
                                     `
-                                    : `<button onclick="claimItem(${index})">Ik wil geven</button>`
+                                    : `<button onclick="claimItem(${index})">Ik wil dit geven</button>`
                                 }
                             </div>
                         </div>
