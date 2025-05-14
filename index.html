@@ -403,19 +403,12 @@
     <div class="container" id="wishlist"></div>
 
     <script>
-        const BIN_ID = '${{ secrets.BIN_ID }}';
-        const API_KEY = '${{ secrets.JSONBIN_API_KEY }}';
         let wishlistItems = [];
         
         async function fetchWishlist() {
             try {
                 console.log('Fetching wishlist...');
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: {
-                        'X-Master-Key': API_KEY,
-                        'X-Bin-Meta': false
-                    }
-                });
+                const response = await fetch('wishlist.json');
                 
                 if (!response.ok) {
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -433,23 +426,26 @@
         async function updateWishlist(itemIndex, reservedBy) {
             try {
                 wishlistItems[itemIndex].reserved = reservedBy ? { name: reservedBy } : null;
-                
-                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': API_KEY
-                    },
-                    body: JSON.stringify(wishlistItems)
-                });
-                
-                if (!response.ok) throw new Error('Update failed');
-                
                 renderWishlist();
                 showStatus(reservedBy ? 'Item gereserveerd!' : 'Reservering verwijderd!', 'success');
+                
+                // Save to localStorage as temporary storage
+                localStorage.setItem('wishlistReservations', JSON.stringify(wishlistItems));
             } catch (error) {
                 console.error('Error:', error);
                 showStatus('Er is een fout opgetreden bij het bijwerken van de reservering', 'error');
+            }
+        }
+
+        function loadStoredReservations() {
+            const stored = localStorage.getItem('wishlistReservations');
+            if (stored) {
+                try {
+                    wishlistItems = JSON.parse(stored);
+                    renderWishlist();
+                } catch (e) {
+                    console.error('Error loading stored reservations:', e);
+                }
             }
         }
 
@@ -509,7 +505,10 @@
         }
 
         // Load wishlist when page loads
-        window.onload = fetchWishlist;
+        window.onload = async () => {
+            await fetchWishlist();
+            loadStoredReservations();
+        };
     </script>
 </body>
 </html>
