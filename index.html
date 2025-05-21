@@ -499,9 +499,40 @@
             }
         }
 
-        async function updateWishlist(itemIndex, reservedBy) {
+        async function updateWishlist(itemIndex, reservedBy, isUnreserving = false) {
             try {
-                wishlistItems[itemIndex].reserved = reservedBy ? { name: reservedBy } : null;
+                const item = wishlistItems[itemIndex];
+                const currentUser = localStorage.getItem('userName');
+                
+                if (!currentUser) {
+                    showStatus('Je naam is niet bekend', 'error');
+                    return;
+                }
+
+                if (isUnreserving) {
+                    // Check if user has a reservation
+                    if (!item.reservations.includes(currentUser)) {
+                        showStatus('Je hebt dit item niet gereserveerd', 'error');
+                        return;
+                    }
+                    // Remove only this user's reservation
+                    item.reservations = item.reservations.filter(name => name !== currentUser);
+                } else {
+                    // Check if user already has a reservation
+                    if (item.reservations.includes(currentUser)) {
+                        showStatus('Je hebt dit item al gereserveerd!', 'error');
+                        return;
+                    }
+                    
+                    // Check if max reservations reached
+                    if (item.reservations.length >= (item.maxReservations || 1)) {
+                        showStatus('Maximum aantal reserveringen bereikt!', 'error');
+                        return;
+                    }
+                    
+                    // Add new reservation
+                    item.reservations.push(currentUser);
+                }
                 
                 // Update JSONBin
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${config.BIN_ID}`, {
@@ -519,7 +550,7 @@
                 }
 
                 renderWishlist();
-                showStatus(reservedBy ? 'Item gereserveerd!' : 'Reservering verwijderd!', 'success');
+                showStatus(isUnreserving ? 'Reservering verwijderd!' : 'Item gereserveerd!', 'success');
             } catch (error) {
                 console.error('Error:', error);
                 showStatus('Er is een fout opgetreden bij het bijwerken van de reservering', 'error');
@@ -527,16 +558,23 @@
         }
 
         async function claimItem(index) {
-            const name = prompt('Wat is je naam?');
-            if (name) {
-                await updateWishlist(index, name);
+            const userName = localStorage.getItem('userName') || prompt('Wat is je naam?');
+            if (userName) {
+                localStorage.setItem('userName', userName);
+                await updateWishlist(index, userName, false);
             }
         }
 
         async function unclaimItem(index) {
+            const userName = localStorage.getItem('userName');
+            if (!userName) {
+                showStatus('Er is geen naam bekend voor deze reservering', 'error');
+                return;
+            }
+            
             const item = wishlistItems[index];
-            if (confirm(`Weet je zeker dat je de reservering voor "${item.name}" wilt verwijderen?`)) {
-                await updateWishlist(index, null);
+            if (confirm(`Weet je zeker dat je je reservering voor "${item.name}" wilt verwijderen?`)) {
+                await updateWishlist(index, userName, true);
             }
         }
 
@@ -548,23 +586,28 @@
                 return;
             }
             
-            console.log('Rendering items:', wishlistItems);
+            const currentUser = localStorage.getItem('userName');
+            
             list.innerHTML = wishlistItems.map((item, index) => {
-                console.log('Rendering item:', item);
+                const reservationCount = item.reservations?.length || 0;
+                const maxReservations = item.maxReservations || 1;
+                const isFullyReserved = reservationCount >= maxReservations;
+                const hasUserReserved = currentUser && item.reservations?.includes(currentUser);
+                
                 return `
-                    <div class="wishlist-item ${item.reserved ? 'bought' : ''}">
+                    <div class="wishlist-item ${isFullyReserved ? 'bought' : ''}">
                         <img src="${getImagePath(item.image)}" alt="${item.name}" class="item-image" 
                              onerror="this.src='${getBasePath()}images/placeholder.svg'">
                         <div class="item-content">
                             <h2 class="item-title">${item.name || 'Geen naam'}</h2>
                             ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
                             <div class="item-status">
-                                ${item.reserved 
-                                    ? `
-                                        <span class="claimed-by">Gekocht door: ${item.reserved.name}</span>
-                                        <button class="unclaim-button" onclick="unclaimItem(${index})">Annuleer reservering</button>
-                                    `
-                                    : `<button onclick="claimItem(${index})">Ik wil dit geven</button>`
+                                <p>Reserveringen: ${reservationCount}/${maxReservations}</p>
+                                ${hasUserReserved 
+                                    ? `<button class="unclaim-button" onclick="unclaimItem(${index})">Annuleer mijn reservering</button>`
+                                    : !isFullyReserved 
+                                        ? `<button onclick="claimItem(${index})">Ik wil dit geven</button>`
+                                        : '<p class="claimed-by">Volledig gereserveerd</p>'
                                 }
                             </div>
                         </div>
@@ -594,3 +637,4 @@
     </script>
 </body>
 </html>
+``` 

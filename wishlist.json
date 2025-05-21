@@ -1,1 +1,51 @@
-[{"name":"Magnesium Firestarter","url":"https://www.bol.com/nl/nl/p/hoogwaardige-magnesium-firestarter-luxe-survival-aansteker-vuurmaker-flint-staaf-noodfluitje-en-vonkstaaf-vuursteen-en-strijker-vuurstarter-survival-vuurstarter-ontdek-de-beste-vuurstarters-voor-avonturiers/9300000161316008/?cid=1747226808918-4953915452022&bltgh=qojQUtHTVm9vqbO6OQpKDQ.4_36.37.ProductImage","image":"images/firestarter.jpg","reserved":null},{"name":"Goede Boormachine","url":"","image":"images/boormachine.png","reserved":null},{"name":"sokken","url":"","image":"images/sok.jpeg","reserved":null},{"name":"Zaag","url":"","image":"images/zaag.jpeg","reserved":null},{"name":"Mini beamer","url":"","image":"images/beamer.png","reserved":null},{"name":"Whetstone (800)","url":"","image":"images/wetstone.jpg","reserved":null},{"name":"mosmuur","url":"","image":"images/mosmuur.jpeg","reserved":null}]
+[
+  {
+    "name": "Magnesium Firestarter",
+    "url": "https://www.bol.com/nl/nl/p/hoogwaardige-magnesium-firestarter-luxe-survival-aansteker-vuurmaker-flint-staaf-noodfluitje-en-vonkstaaf-vuursteen-en-strijker-vuurstarter-survival-vuurstarter-ontdek-de-beste-vuurstarters-voor-avonturiers/9300000161316008/?cid=1747226808918-4953915452022&bltgh=qojQUtHTVm9vqbO6OQpKDQ.4_36.37.ProductImage",
+    "image": "images/firestarter.jpg",
+    "maxReservations": 1,
+    "reservations": []
+  },
+  {
+    "name": "Goede Boormachine",
+    "url": "",
+    "image": "images/boormachine.png",
+    "maxReservations": 1,
+    "reservations": []
+  },
+  {
+    "name": "sokken",
+    "url": "",
+    "image": "images/sok.jpeg",
+    "maxReservations": 3,
+    "reservations": []
+  },
+  {
+    "name": "Zaag",
+    "url": "",
+    "image": "images/zaag.jpeg",
+    "maxReservations": 1,
+    "reservations": []
+  },
+  {
+    "name": "Mini beamer",
+    "url": "",
+    "image": "images/beamer.png",
+    "maxReservations": 1,
+    "reservations": []
+  },
+  {
+    "name": "Whetstone (800)",
+    "url": "",
+    "image": "images/wetstone.jpg",
+    "maxReservations": 1,
+    "reservations": []
+  },
+  {
+    "name": "mosmuur",
+    "url": "",
+    "image": "images/mosmuur.jpeg",
+    "maxReservations": 1,
+    "reservations": []
+  }
+]
