@@ -454,6 +454,13 @@
                         console.error('Invalid response format:', jsonResponse);
                         throw new Error('Invalid response format from JSONBin');
                     }
+
+                    // Ensure all items have the required properties
+                    wishlistItems = wishlistItems.map(item => ({
+                        ...item,
+                        maxReservations: item.maxReservations || 1,
+                        reservations: item.reservations || []
+                    }));
                     
                     console.log('Processed wishlist items:', wishlistItems);
                 } else {
@@ -524,8 +531,9 @@
                         return;
                     }
                     
-                    // Check if max reservations reached
-                    if (item.reservations.length >= (item.maxReservations || 1)) {
+                    // Check if max reservations reached (skip check if maxReservations > 90)
+                    const maxReservations = item.maxReservations || 1;
+                    if (maxReservations <= 90 && item.reservations.length >= maxReservations) {
                         showStatus('Maximum aantal reserveringen bereikt!', 'error');
                         return;
                     }
@@ -591,7 +599,8 @@
             list.innerHTML = wishlistItems.map((item, index) => {
                 const reservationCount = item.reservations?.length || 0;
                 const maxReservations = item.maxReservations || 1;
-                const isFullyReserved = reservationCount >= maxReservations;
+                const displayMaxReservations = maxReservations > 90 ? '∞' : maxReservations;
+                const isFullyReserved = maxReservations <= 90 && reservationCount >= maxReservations;
                 const hasUserReserved = currentUser && item.reservations?.includes(currentUser);
                 
                 return `
@@ -602,7 +611,7 @@
                             <h2 class="item-title">${item.name || 'Geen naam'}</h2>
                             ${item.url ? `<a href="${item.url}" target="_blank" class="item-link">Bekijk product</a>` : ''}
                             <div class="item-status">
-                                <p>Reserveringen: ${reservationCount}/${maxReservations}</p>
+                                <p>Reserveringen: ${reservationCount}/${displayMaxReservations}</p>
                                 ${hasUserReserved 
                                     ? `<button class="unclaim-button" onclick="unclaimItem(${index})">Annuleer mijn reservering</button>`
                                     : !isFullyReserved 
